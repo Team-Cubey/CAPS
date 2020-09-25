@@ -7,12 +7,13 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Net.Http;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 
 public static class Program
 {
     public static void Main(string[] args)
     {
-        IHttpServer server = new HttpServer(9876);
+        IHttpServer server = new HttpServer(5035);
         server.Start();
     }
 }
@@ -52,8 +53,10 @@ public class HttpServer : IHttpServer
 
     public HttpServer(int port)
     {
-        this.listener = new TcpListener(IPAddress.Parse("127.0.0.1"), port);
+        this.listener = new TcpListener(IPAddress.Parse("0.0.0.0"), port);
     }
+
+    public bool dont = false;
 
     public void Start()
     {
@@ -100,100 +103,141 @@ public class HttpServer : IHttpServer
         this.listener.Start();
         while (true)
         {
-            var client = this.listener.AcceptTcpClient();
-            var buffer = new byte[10240];
-            var stream = client.GetStream();
-            var length = stream.Read(buffer, 0, buffer.Length);
-            var incomingMessage = Encoding.UTF8.GetString(buffer, 0, length);
-
-            Regex r = new Regex(@"GET (.+?) HTTP");
-            MatchCollection mc = r.Matches(incomingMessage);
-
-            string page = mc[0].Groups[1].Value;
-
-            var queryString = ParseQuery(page);
-
-            string result = "";
-
-            if (page.Contains("clfstat"))
+            try
             {
-                if (queryString.TryGetValue("map", out string map))
+                var client = this.listener.AcceptTcpClient();
+                var buffer = new byte[10240];
+                var stream = client.GetStream();
+                var length = stream.Read(buffer, 0, buffer.Length);
+                var incomingMessage = Encoding.UTF8.GetString(buffer, 0, length);
+
+                MatchCollection mc;
+
+                string result = "";
+
+
+                try
                 {
-                    if (map.StartsWith("https://cubey.hubza.co.uk/"))
+                    if (incomingMessage.Contains("GET"))
                     {
-                        string levelcontents;
-                        using (var wc = new System.Net.WebClient())
-                            levelcontents = wc.DownloadString(map);
-
-                        // code stripped from cubey's adventures
-
-                        string level = levelcontents.Substring(levelcontents.LastIndexOf(']') + 1);
-                        int pFrom = levelcontents.IndexOf("[META]") + "[META]".Length;
-                        int pTo = levelcontents.LastIndexOf("[LEVEL]");
-                        string meta = levelcontents.Substring(pFrom, pTo - pFrom);
-                        meta = Regex.Replace(meta, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
-                        level = Regex.Replace(level, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
-                        char[] delims = new[] { '\r', '\n' };
-                        string[] levels = level.Split(delims, StringSplitOptions.RemoveEmptyEntries);
-
-                        // is no longer
-
-                        foreach (string line in levels)
-                        {
-                            string[] dataChunks = line.Split(',');
-                            float x = float.Parse(dataChunks[0]);
-                            float y = float.Parse(dataChunks[1]);
-                            float rotation = float.Parse(dataChunks[2]);
-                            int id = int.Parse(dataChunks[3]);
-                            tiles[id].amount += 1;
-                        }
-
-                        //result += "<h1>Hello, world!</h1> Your URL should be: " + page + " and map query should be " + map;
-
-                        string tiles_json = "";
-
-                        int count = 0;
-
-                        foreach (Tile ea in tiles)
-                        {
-                            //result += ea.amount + " " + ea.name + "s | ";
-                            tiles_json += "\"" + ea.name + "\": { \"amount\": \"" + ea.amount + "\" },";
-                            ea.amount = 0;
-                            count += 1;
-                        }
-
-                        var index = tiles_json.LastIndexOf(',');
-                        if (index >= 0)
-                        {
-                            tiles_json = tiles_json.Substring(0, index);
-                            Console.WriteLine(result);
-                        }
-
-                        result = "{ \"tiles\": { " + tiles_json + " } }";
+                        Regex r = new Regex(@"GET (.+?) HTTP");
+                        mc = r.Matches(incomingMessage);
+                    }
+                    else if (incomingMessage.Contains("POST"))
+                    {
+                        Regex r = new Regex(@"GET (.+?) POST");
+                        mc = r.Matches(incomingMessage);
                     }
                     else
                     {
-                        result = "Unverified Location";
+                        Regex r = new Regex(@"(.+?)");
+                        mc = r.Matches(incomingMessage);
+                        dont = true;
+                    }
+                }
+                catch
+                {
+                    Regex r = new Regex(@"(.+?)");
+                    mc = r.Matches(incomingMessage);
+                    result = "error loading page";
+                }
+
+
+                if (dont == false)
+                {
+                    string page = mc[0].Groups[1].Value;
+
+                    var queryString = ParseQuery(page);
+
+
+                    if (page.Contains("clfstat"))
+                    {
+                        if (queryString.TryGetValue("map", out string map))
+                        {
+                            if (map.StartsWith("https://cubey.hubza.co.uk/"))
+                            {
+                                string levelcontents;
+                                using (var wc = new System.Net.WebClient())
+                                    levelcontents = wc.DownloadString(map);
+
+                                // code stripped from cubey's adventures
+
+                                string level = levelcontents.Substring(levelcontents.LastIndexOf(']') + 1);
+                                int pFrom = levelcontents.IndexOf("[META]") + "[META]".Length;
+                                int pTo = levelcontents.LastIndexOf("[LEVEL]");
+                                string meta = levelcontents.Substring(pFrom, pTo - pFrom);
+                                meta = Regex.Replace(meta, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
+                                level = Regex.Replace(level, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
+                                char[] delims = new[] { '\r', '\n' };
+                                string[] levels = level.Split(delims, StringSplitOptions.RemoveEmptyEntries);
+
+                                // is no longer
+
+                                foreach (string line in levels)
+                                {
+                                    string[] dataChunks = line.Split(',');
+                                    float x = float.Parse(dataChunks[0]);
+                                    float y = float.Parse(dataChunks[1]);
+                                    float rotation = float.Parse(dataChunks[2]);
+                                    int id = int.Parse(dataChunks[3]);
+                                    tiles[id].amount += 1;
+                                }
+
+                                //result += "<h1>Hello, world!</h1> Your URL should be: " + page + " and map query should be " + map;
+
+                                string tiles_json = "";
+
+                                int count = 0;
+
+                                foreach (Tile ea in tiles)
+                                {
+                                    //result += ea.amount + " " + ea.name + "s | ";
+                                    tiles_json += "\"" + ea.name + "\": { \"amount\": \"" + ea.amount + "\" },";
+                                    ea.amount = 0;
+                                    count += 1;
+                                }
+
+                                var index = tiles_json.LastIndexOf(',');
+                                if (index >= 0)
+                                {
+                                    tiles_json = tiles_json.Substring(0, index);
+                                    Console.WriteLine(result);
+                                }
+
+                                result = "{ \"tiles\": { " + tiles_json + " } }";
+                            }
+                            else
+                            {
+                                result = "Unverified Location";
+                            }
+                        }
+                        else
+                        {
+                            result = "couldn't parse map";
+                        }
+                    }
+                    else
+                    {
+                        result = "unknown page";
                     }
                 }
                 else
                 {
-                    result = "couldn't parse map";
+                    result = "refused";
                 }
-            }
-            else
+                stream.Write(
+                    Encoding.UTF8.GetBytes(
+                        "HTTP/1.0 200 OK" + Environment.NewLine
+                        + "Content-Length: " + result.Length + Environment.NewLine
+                        + "Content-Type: " + "application/json" + Environment.NewLine
+                        + Environment.NewLine
+                        + result
+                        + Environment.NewLine + Environment.NewLine));
+                Console.WriteLine("Incoming message: {0}", incomingMessage);
+            }catch (Exception e)
             {
-                result = "unknown page";
+                Console.WriteLine("Error: " + e);
             }
-            stream.Write(
-                Encoding.UTF8.GetBytes(
-                    "HTTP/1.0 200 OK" + Environment.NewLine
-                    + "Content-Length: " + result.Length + Environment.NewLine
-                    + "Content-Type: " + "application/json" + Environment.NewLine
-                    + Environment.NewLine
-                    + result
-                    + Environment.NewLine + Environment.NewLine));
-            Console.WriteLine("Incoming message: {0}", incomingMessage);
         }
     }
 }
