@@ -22,6 +22,21 @@ public interface IHttpServer
     void Start();
 }
 
+public class Tile
+{
+    public Tile(string name, int id, int amount = 0)
+    {
+        this.name = name;
+        this.id = id;
+        this.amount = amount;
+    }
+
+    public string name { get; set; }
+    public int id { get; set; }
+    public int amount { get; set; }
+    //public int LocationY { get; set; }
+}
+
 public class HttpServer : IHttpServer
 {
     static Dictionary<string, string> ParseQuery(string uri)
@@ -42,6 +57,47 @@ public class HttpServer : IHttpServer
 
     public void Start()
     {
+        Tile[] tiles = new Tile[]
+            {
+                new Tile("Land", 1),
+                new Tile("Cubey", 2),
+                new Tile("Key", 3),
+                new Tile("Portal", 4),
+                new Tile("Vertical Evilcube", 5),
+                new Tile("Horizontal Evilcube", 6),
+                new Tile("Evilcube Reverser", 7),
+                new Tile("Evilflower", 8),
+                new Tile("Reserved", 8),
+                new Tile("Reserved", 9),
+                new Tile("Reserved", 10),
+                new Tile("Reserved", 11),
+                new Tile("Reserved", 12),
+                new Tile("Reserved", 13),
+                new Tile("Reserved", 14),
+                new Tile("Reserved", 15),
+                new Tile("Reserved", 16),
+                new Tile("Jumppad", 17),
+                new Tile("Evilkey", 1),
+                new Tile("Evilflower Shooter", 18),
+                new Tile("4D Shooter", 19),
+                new Tile("Land Nocol", 20),
+                new Tile("Barrier", 21),
+                new Tile("Flag/Checkpoint", 22),
+                new Tile("Red Gate", 23),
+                new Tile("Red Gate Key", 24),
+                new Tile("Green Gate", 25),
+                new Tile("Green Gate Key", 26),
+                new Tile("Blue Gate", 27),
+                new Tile("Blue Gate Key", 28),
+                new Tile("Moving Land", 29),
+                new Tile("Meta Display", 30),
+                new Tile("Teleportal", 31),
+                new Tile("Reserved", 32),
+                new Tile("Land Reverser", 33),
+                new Tile("Heart", 34),
+                new Tile("Evilheart", 35)
+            };
+
         this.listener.Start();
         while (true)
         {
@@ -64,14 +120,42 @@ public class HttpServer : IHttpServer
             {
                 if (queryString.TryGetValue("map", out string map))
                 {
-                    if (map.StartsWith("https://cubey.hubza.co.uk/levels/uploads/level/"))
+                    if (map.StartsWith("https://cubey.hubza.co.uk/"))
                     {
-                        string level;
+                        string levelcontents;
                         using (var wc = new System.Net.WebClient())
-                            level = wc.DownloadString(map);
+                            levelcontents = wc.DownloadString(map);
+
+                        // code stripped from cubey's adventures
+
+                        string level = levelcontents.Substring(levelcontents.LastIndexOf(']') + 1);
+                        int pFrom = levelcontents.IndexOf("[META]") + "[META]".Length;
+                        int pTo = levelcontents.LastIndexOf("[LEVEL]");
+                        string meta = levelcontents.Substring(pFrom, pTo - pFrom);
+                        meta = Regex.Replace(meta, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
+                        level = Regex.Replace(level, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
+                        char[] delims = new[] { '\r', '\n' };
+                        string[] levels = level.Split(delims, StringSplitOptions.RemoveEmptyEntries);
+
+                        // is no longer
+
+                        foreach (string line in levels)
+                        {
+                            string[] dataChunks = line.Split(',');
+                            float x = float.Parse(dataChunks[0]);
+                            float y = float.Parse(dataChunks[1]);
+                            float rotation = float.Parse(dataChunks[2]);
+                            int id = int.Parse(dataChunks[3]);
+                            tiles[id].amount += 1;
+                        }
 
                         result += "<h1>Hello, world!</h1> Your URL should be: " + page + " and map query should be " + map;
-                        result += "<br><br>SELECTED CLF CONTENTS:<br>" + level;
+
+                        foreach (Tile ea in tiles)
+                        {
+                            result += ea.amount + " " + ea.name + "s | ";
+                            ea.amount = 0;
+                        }
                     }
                     else
                     {
