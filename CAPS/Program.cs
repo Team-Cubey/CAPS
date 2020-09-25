@@ -75,9 +75,8 @@ public class HttpServer : IHttpServer
                 new Tile("Reserved", 13),
                 new Tile("Reserved", 14),
                 new Tile("Reserved", 15),
-                new Tile("Reserved", 16),
-                new Tile("Jumppad", 17),
-                new Tile("Evilkey", 1),
+                new Tile("Jumppad", 16),
+                new Tile("Evilkey", 17),
                 new Tile("Evilflower Shooter", 18),
                 new Tile("4D Shooter", 19),
                 new Tile("Land Nocol", 20),
@@ -149,13 +148,28 @@ public class HttpServer : IHttpServer
                             tiles[id].amount += 1;
                         }
 
-                        result += "<h1>Hello, world!</h1> Your URL should be: " + page + " and map query should be " + map;
+                        //result += "<h1>Hello, world!</h1> Your URL should be: " + page + " and map query should be " + map;
+
+                        string tiles_json = "";
+
+                        int count = 0;
 
                         foreach (Tile ea in tiles)
                         {
-                            result += ea.amount + " " + ea.name + "s | ";
+                            //result += ea.amount + " " + ea.name + "s | ";
+                            tiles_json += "\"" + ea.name + "\": { \"amount\": \"" + ea.amount + "\" },";
                             ea.amount = 0;
+                            count += 1;
                         }
+
+                        var index = tiles_json.LastIndexOf(',');
+                        if (index >= 0)
+                        {
+                            tiles_json = tiles_json.Substring(0, index);
+                            Console.WriteLine(result);
+                        }
+
+                        result = "{ \"tiles\": { " + tiles_json + " } }";
                     }
                     else
                     {
@@ -175,7 +189,7 @@ public class HttpServer : IHttpServer
                 Encoding.UTF8.GetBytes(
                     "HTTP/1.0 200 OK" + Environment.NewLine
                     + "Content-Length: " + result.Length + Environment.NewLine
-                    + "Content-Type: " + "text/html" + Environment.NewLine
+                    + "Content-Type: " + "application/json" + Environment.NewLine
                     + Environment.NewLine
                     + result
                     + Environment.NewLine + Environment.NewLine));
