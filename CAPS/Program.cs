@@ -8,6 +8,7 @@ using System.Web;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.IO;
 
 public class Tile
 {
@@ -59,10 +60,11 @@ public class HttpServer : IHttpServer
     }
 
     public bool dont = false;
+    public Tile[] tiles;
 
-    public void Start()
+    public void generatetiles()
     {
-        Tile[] tiles = new Tile[]
+        tiles = new Tile[]
             {
                 new Tile("Land", 1, 0, "https://cubey.hubza.co.uk/img/tiles/land.png"),
                 new Tile("Cubey", 2, 0, "unknown"),
@@ -101,12 +103,78 @@ public class HttpServer : IHttpServer
                 new Tile("Heart", 34, 0, "https://cubey.hubza.co.uk/img/tiles/heart.png"),
                 new Tile("Evilheart", 35, 0, "https://cubey.hubza.co.uk/img/tiles/evilheart.png")
             };
+    }
+
+    public string goclfstat(string map)
+    {
+        string levelcontents;
+        using (var wc = new System.Net.WebClient())
+            levelcontents = wc.DownloadString(map);
+
+        // code stripped from cubey's adventures
+
+        string level = levelcontents.Substring(levelcontents.LastIndexOf(']') + 1);
+        int pFrom = levelcontents.IndexOf("[META]") + "[META]".Length;
+        int pTo = levelcontents.LastIndexOf("[LEVEL]");
+        string meta = levelcontents.Substring(pFrom, pTo - pFrom);
+        meta = Regex.Replace(meta, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
+        level = Regex.Replace(level, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
+        char[] delims = new[] { '\r', '\n' };
+        string[] levels = level.Split(delims, StringSplitOptions.RemoveEmptyEntries);
+
+        // is no longer
+
+        foreach (string line in levels)
+        {
+            string[] dataChunks = line.Split(',');
+            float x = float.Parse(dataChunks[0]);
+            float y = float.Parse(dataChunks[1]);
+            float rotation = float.Parse(dataChunks[2]);
+            int id = int.Parse(dataChunks[3]);
+            tiles[id].amount += 1;
+        }
+
+        string tiles_json = "";
+
+        int count = 0;
+
+        foreach (Tile ea in tiles)
+        {
+            //result += ea.amount + " " + ea.name + "s | ";
+            tiles_json += "\"" + ea.name + "\": { \"name\": \"" + ea.name + "\", \"id\": \"" + ea.id + "\",  \"amount\": \"" + ea.amount + "\", \"image\": \"" + ea.image + "\" },";
+            ea.amount = 0;
+            count += 1;
+        }
+
+        var index = tiles_json.LastIndexOf(',');
+        if (index >= 0)
+        {
+            tiles_json = tiles_json.Substring(0, index);
+        }
+
+        return "{ \"tiles\": { " + tiles_json + " } }";
+    }
+
+    public void writestream(string result, Stream stream, string incomingMessage)
+    {
+        stream.Write(
+                    Encoding.UTF8.GetBytes(
+                        "HTTP/1.0 200 OK" + Environment.NewLine
+                        + "Content-Length: " + result.Length + Environment.NewLine
+                        + "Content-Type: " + "application/json" + Environment.NewLine
+                        + Environment.NewLine
+                        + result
+                        + Environment.NewLine + Environment.NewLine));
+        Console.WriteLine("Incoming message: {0}", incomingMessage);
+    }
+
+    public void Start()
+    {
+        generatetiles();
 
         this.listener.Start();
         while (true)
         {
-            dont = false;
-
             try
             {
                 var client = this.listener.AcceptTcpClient();
@@ -119,122 +187,51 @@ public class HttpServer : IHttpServer
 
                 string result = "";
 
-                try
+                if (incomingMessage.Contains("GET"))
                 {
-                    if (incomingMessage.Contains("GET"))
-                    {
-                        Regex r = new Regex(@"GET (.+?) HTTP");
-                        mc = r.Matches(incomingMessage);
-                    }
-                    else if (incomingMessage.Contains("POST"))
-                    {
-                        Regex r = new Regex(@"GET (.+?) POST");
-                        mc = r.Matches(incomingMessage);
-                    }
-                    else
-                    {
-                        Regex r = new Regex(@"(.+?)");
-                        mc = r.Matches(incomingMessage);
-                        dont = true;
-                    }
+                    Regex r = new Regex(@"GET (.+?) HTTP");
+                    mc = r.Matches(incomingMessage);
                 }
-                catch
+                else if (incomingMessage.Contains("POST"))
+                {
+                    Regex r = new Regex(@"GET (.+?) POST");
+                    mc = r.Matches(incomingMessage);
+                }
+                else
                 {
                     Regex r = new Regex(@"(.+?)");
                     mc = r.Matches(incomingMessage);
-                    result = "error loading page";
+                    dont = true;
                 }
 
-                if (dont == false)
+                string page = mc[0].Groups[1].Value;
+
+                var queryString = ParseQuery(page);
+
+                if (page.Contains("clfstat"))
                 {
-                    string page = mc[0].Groups[1].Value;
-
-                    var queryString = ParseQuery(page);
-
-                    if (page.Contains("clfstat"))
+                    if (queryString.TryGetValue("map", out string map))
                     {
-                        if (queryString.TryGetValue("map", out string map))
+                        if (map.StartsWith("https://cubey.hubza.co.uk/"))
                         {
-                            if (map.StartsWith("https://cubey.hubza.co.uk/"))
-                            {
-                                string levelcontents;
-                                using (var wc = new System.Net.WebClient())
-                                    levelcontents = wc.DownloadString(map);
-
-                                // code stripped from cubey's adventures
-
-                                string level = levelcontents.Substring(levelcontents.LastIndexOf(']') + 1);
-                                int pFrom = levelcontents.IndexOf("[META]") + "[META]".Length;
-                                int pTo = levelcontents.LastIndexOf("[LEVEL]");
-                                string meta = levelcontents.Substring(pFrom, pTo - pFrom);
-                                meta = Regex.Replace(meta, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
-                                level = Regex.Replace(level, @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
-                                char[] delims = new[] { '\r', '\n' };
-                                string[] levels = level.Split(delims, StringSplitOptions.RemoveEmptyEntries);
-
-                                // is no longer
-
-                                foreach (string line in levels)
-                                {
-                                    string[] dataChunks = line.Split(',');
-                                    float x = float.Parse(dataChunks[0]);
-                                    float y = float.Parse(dataChunks[1]);
-                                    float rotation = float.Parse(dataChunks[2]);
-                                    int id = int.Parse(dataChunks[3]);
-                                    tiles[id].amount += 1;
-                                }
-
-                                //result += "<h1>Hello, world!</h1> Your URL should be: " + page + " and map query should be " + map;
-
-                                string tiles_json = "";
-
-                                int count = 0;
-
-                                foreach (Tile ea in tiles)
-                                {
-                                    //result += ea.amount + " " + ea.name + "s | ";
-                                    tiles_json += "\"" + ea.name + "\": { \"name\": \"" + ea.name + "\", \"id\": \"" + ea.id + "\",  \"amount\": \"" + ea.amount + "\", \"image\": \"" + ea.image + "\" },";
-                                    ea.amount = 0;
-                                    count += 1;
-                                }
-
-                                var index = tiles_json.LastIndexOf(',');
-                                if (index >= 0)
-                                {
-                                    tiles_json = tiles_json.Substring(0, index);
-                                    Console.WriteLine(result);
-                                }
-
-                                result = "{ \"tiles\": { " + tiles_json + " } }";
-                            }
-                            else
-                            {
-                                result = "Unverified Location";
-                            }
+                            result = goclfstat(map);
                         }
                         else
                         {
-                            result = "couldn't parse map";
+                            result = "Unverified Location";
                         }
                     }
                     else
                     {
-                        result = "unknown page";
+                        result = "couldn't parse map";
                     }
                 }
                 else
                 {
-                    result = "refused";
+                    result = "unknown page";
                 }
-                stream.Write(
-                    Encoding.UTF8.GetBytes(
-                        "HTTP/1.0 200 OK" + Environment.NewLine
-                        + "Content-Length: " + result.Length + Environment.NewLine
-                        + "Content-Type: " + "application/json" + Environment.NewLine
-                        + Environment.NewLine
-                        + result
-                        + Environment.NewLine + Environment.NewLine));
-                Console.WriteLine("Incoming message: {0}", incomingMessage);
+
+                writestream(result, stream, incomingMessage);
             }catch (Exception e)
             {
                 Console.WriteLine("Error: " + e);
