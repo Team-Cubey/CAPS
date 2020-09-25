@@ -10,6 +10,15 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.IO;
 
+public static class Program
+{
+    public static void Main(string[] args)
+    {
+        IHttpServer server = new HttpServer(5035);
+        server.Start();
+    }
+}
+
 public class Tile
 {
     public Tile(string name, int id, int amount = 0, string image = "unknown")
@@ -25,15 +34,6 @@ public class Tile
     public int amount { get; set; }
     public string image { get; set; }
     //public int LocationY { get; set; }
-}
-
-public static class Program
-{
-    public static void Main(string[] args)
-    {
-        IHttpServer server = new HttpServer(5035);
-        server.Start();
-    }
 }
 
 public interface IHttpServer
