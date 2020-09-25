@@ -119,7 +119,6 @@ public class HttpServer : IHttpServer
 
                 string result = "";
 
-
                 try
                 {
                     if (incomingMessage.Contains("GET"))
@@ -146,13 +145,11 @@ public class HttpServer : IHttpServer
                     result = "error loading page";
                 }
 
-
                 if (dont == false)
                 {
                     string page = mc[0].Groups[1].Value;
 
                     var queryString = ParseQuery(page);
-
 
                     if (page.Contains("clfstat"))
                     {
@@ -242,8 +239,6 @@ public class HttpServer : IHttpServer
             {
                 Console.WriteLine("Error: " + e);
             }
-
-            
         }
     }
 }
