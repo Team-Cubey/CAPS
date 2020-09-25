@@ -25,16 +25,18 @@ public interface IHttpServer
 
 public class Tile
 {
-    public Tile(string name, int id, int amount = 0)
+    public Tile(string name, int id, int amount = 0, string image = "unknown")
     {
         this.name = name;
         this.id = id;
         this.amount = amount;
+        this.image = image;
     }
 
     public string name { get; set; }
     public int id { get; set; }
     public int amount { get; set; }
+    public string image { get; set; }
     //public int LocationY { get; set; }
 }
 
@@ -62,42 +64,42 @@ public class HttpServer : IHttpServer
     {
         Tile[] tiles = new Tile[]
             {
-                new Tile("Land", 1),
-                new Tile("Cubey", 2),
-                new Tile("Key", 3),
-                new Tile("Portal", 4),
-                new Tile("Vertical Evilcube", 5),
-                new Tile("Horizontal Evilcube", 6),
-                new Tile("Evilcube Reverser", 7),
-                new Tile("Evilflower", 8),
-                new Tile("Reserved", 8),
-                new Tile("Reserved", 9),
-                new Tile("Reserved", 10),
-                new Tile("Reserved", 11),
-                new Tile("Reserved", 12),
-                new Tile("Reserved", 13),
-                new Tile("Reserved", 14),
-                new Tile("Reserved", 15),
-                new Tile("Jumppad", 16),
-                new Tile("Evilkey", 17),
-                new Tile("Evilflower Shooter", 18),
-                new Tile("4D Shooter", 19),
-                new Tile("Land Nocol", 20),
-                new Tile("Barrier", 21),
-                new Tile("Flag/Checkpoint", 22),
-                new Tile("Red Gate", 23),
-                new Tile("Red Gate Key", 24),
-                new Tile("Green Gate", 25),
-                new Tile("Green Gate Key", 26),
-                new Tile("Blue Gate", 27),
-                new Tile("Blue Gate Key", 28),
-                new Tile("Moving Land", 29),
-                new Tile("Meta Display", 30),
-                new Tile("Teleportal", 31),
-                new Tile("Reserved", 32),
-                new Tile("Land Reverser", 33),
-                new Tile("Heart", 34),
-                new Tile("Evilheart", 35)
+                new Tile("Land", 1, 0, "https://cubey.hubza.co.uk/img/tiles/land.png"),
+                new Tile("Cubey", 2, 0, "unknown"),
+                new Tile("Key", 3, 0, "https://cubey.hubza.co.uk/img/tiles/key.png"),
+                new Tile("Portal", 4, 0, "https://cubey.hubza.co.uk/img/tiles/portal.png"),
+                new Tile("Vertical Evilcube", 5, 0, "https://cubey.hubza.co.uk/img/tiles/killcube.png"),
+                new Tile("Horizontal Evilcube", 6, 0, "https://cubey.hubza.co.uk/img/tiles/killcube.png"),
+                new Tile("Evilcube Reverser", 7, 0, "https://cubey.hubza.co.uk/img/tiles/debugcube.png"),
+                new Tile("Evilflower", 8, 0, "https://cubey.hubza.co.uk/img/tiles/flower.png"),
+                new Tile("Reserved", 8, 0, "unknown"),
+                new Tile("Reserved", 9, 0, "unknown"),
+                new Tile("Reserved", 10, 0, "unknown"),
+                new Tile("Reserved", 11, 0, "unknown"),
+                new Tile("Reserved", 12, 0, "unknown"),
+                new Tile("Reserved", 13, 0, "unknown"),
+                new Tile("Reserved", 14, 0, "unknown"),
+                new Tile("Reserved", 15, 0, "unknown"),
+                new Tile("Jumppad", 16, 0, "https://cubey.hubza.co.uk/img/tiles/jumppad.png"),
+                new Tile("Evilkey", 17, 0, "https://cubey.hubza.co.uk/img/tiles/evilkey.png"),
+                new Tile("Evilflower Shooter", 18, 0, "https://cubey.hubza.co.uk/img/tiles/flower.png"),
+                new Tile("4D Shooter", 19, 0, "https://cubey.hubza.co.uk/img/tiles/fireballshooter-4d.png"),
+                new Tile("Land Nocol", 20, 0, "https://cubey.hubza.co.uk/img/tiles/land-nocol.png"),
+                new Tile("Barrier", 21, 0, "unknown"),
+                new Tile("Flag/Checkpoint", 22, 0, "https://cubey.hubza.co.uk/img/tiles/flag.png"),
+                new Tile("Red Gate", 23, 0, "https://cubey.hubza.co.uk/img/tiles/gate-red.png"),
+                new Tile("Red Gate Key", 24, 0, "https://cubey.hubza.co.uk/img/tiles/key-red.png"),
+                new Tile("Green Gate", 25, 0, "https://cubey.hubza.co.uk/img/tiles/gate-green.png"),
+                new Tile("Green Gate Key", 26, 0, "https://cubey.hubza.co.uk/img/tiles/key-green.png"),
+                new Tile("Blue Gate", 27, 0, "https://cubey.hubza.co.uk/img/tiles/gate-blue.png"),
+                new Tile("Blue Gate Key", 28, 0, "https://cubey.hubza.co.uk/img/tiles/key-blue.png"),
+                new Tile("Moving Land", 29, 0, "https://cubey.hubza.co.uk/img/tiles/land.png"),
+                new Tile("Meta Display", 30, 0, "unknown"),
+                new Tile("Teleportal", 31, 0, "unknown"),
+                new Tile("Reserved", 32, 0, "unknown"),
+                new Tile("Land Reverser", 33, 0, "https://cubey.hubza.co.uk/img/tiles/debugcube.png"),
+                new Tile("Heart", 34, 0, "https://cubey.hubza.co.uk/img/tiles/heart.png"),
+                new Tile("Evilheart", 35, 0, "https://cubey.hubza.co.uk/img/tiles/evilheart.png")
             };
 
         this.listener.Start();
@@ -192,7 +194,7 @@ public class HttpServer : IHttpServer
                                 foreach (Tile ea in tiles)
                                 {
                                     //result += ea.amount + " " + ea.name + "s | ";
-                                    tiles_json += "\"" + ea.name + "\": { \"amount\": \"" + ea.amount + "\" },";
+                                    tiles_json += "\"" + ea.name + "\": { \"name\": \"" + ea.name + "\", \"amount\": \"" + ea.amount + "\", \"image\": \"" + ea.image + "\" },";
                                     ea.amount = 0;
                                     count += 1;
                                 }
