@@ -194,7 +194,7 @@ public class HttpServer : IHttpServer
                                 foreach (Tile ea in tiles)
                                 {
                                     //result += ea.amount + " " + ea.name + "s | ";
-                                    tiles_json += "\"" + ea.name + "\": { \"name\": \"" + ea.name + "\", \"amount\": \"" + ea.amount + "\", \"image\": \"" + ea.image + "\" },";
+                                    tiles_json += "\"" + ea.name + "\": { \"name\": \"" + ea.name + "\", \"id\": \"" + ea.id + "\",  \"amount\": \"" + ea.amount + "\", \"image\": \"" + ea.image + "\" },";
                                     ea.amount = 0;
                                     count += 1;
                                 }
