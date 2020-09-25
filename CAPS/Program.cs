@@ -105,6 +105,8 @@ public class HttpServer : IHttpServer
         this.listener.Start();
         while (true)
         {
+            dont = false;
+
             try
             {
                 var client = this.listener.AcceptTcpClient();
@@ -240,6 +242,8 @@ public class HttpServer : IHttpServer
             {
                 Console.WriteLine("Error: " + e);
             }
+
+            
         }
     }
 }
