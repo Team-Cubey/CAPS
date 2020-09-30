@@ -155,13 +155,13 @@ public class HttpServer : IHttpServer
         return "{ \"tiles\": { " + tiles_json + " } }";
     }
 
-    public void writestream(string result, Stream stream, string incomingMessage)
+    public void writestream(string result, Stream stream, string incomingMessage, string type)
     {
         stream.Write(
                     Encoding.UTF8.GetBytes(
                         "HTTP/1.0 200 OK" + Environment.NewLine
                         + "Content-Length: " + result.Length + Environment.NewLine
-                        + "Content-Type: " + "application/json" + Environment.NewLine
+                        + "Content-Type: " + type + Environment.NewLine
                         + Environment.NewLine
                         + result
                         + Environment.NewLine + Environment.NewLine));
@@ -215,23 +215,22 @@ public class HttpServer : IHttpServer
                         if (map.StartsWith("https://cubey.hubza.co.uk/"))
                         {
                             result = goclfstat(map);
+                            writestream(result, stream, incomingMessage, "application/json");
                         }
                         else
                         {
-                            result = "Unverified Location";
+                            writestream("Unverified CLF upload location", stream, incomingMessage, "text/html");
                         }
                     }
                     else
                     {
-                        result = "couldn't parse map";
+                        writestream("Map not set", stream, incomingMessage, "text/html");
                     }
                 }
                 else
                 {
-                    result = "unknown page";
+                    writestream("Unknown Page. 404", stream, incomingMessage, "text/html");
                 }
-
-                writestream(result, stream, incomingMessage);
             }catch (Exception e)
             {
                 Console.WriteLine("Error: " + e);
