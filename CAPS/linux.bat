@@ -1,1 +1,1 @@
-dotnet build --nologo --runtime linux-arm -c Release
+dotnet build --nologo --runtime ubuntu.18.04-x64 -c Release

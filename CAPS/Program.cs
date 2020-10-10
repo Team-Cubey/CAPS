@@ -14,7 +14,7 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        IHttpServer server = new HttpServer(5035);
+        IHttpServer server = new HttpServer(50959);
         server.Start();
     }
 }
@@ -173,6 +173,7 @@ public class HttpServer : IHttpServer
         generatetiles();
 
         this.listener.Start();
+        Console.WriteLine("Started CAPS server");
         while (true)
         {
             try
