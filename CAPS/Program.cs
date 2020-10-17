@@ -67,7 +67,7 @@ public class HttpServer : IHttpServer
         tiles = new Tile[]
             {
                 new Tile("Land", 1, 0, "https://cubey.hubza.co.uk/img/tiles/land.png"),
-                new Tile("Cubey", 2, 0, "unknown"),
+                new Tile("Cubey", 2, 0, "https://cubey.hubza.co.uk/img/tiles/cubey.png"),
                 new Tile("Key", 3, 0, "https://cubey.hubza.co.uk/img/tiles/key.png"),
                 new Tile("Portal", 4, 0, "https://cubey.hubza.co.uk/img/tiles/portal.png"),
                 new Tile("Vertical Evilcube", 5, 0, "https://cubey.hubza.co.uk/img/tiles/killcube.png"),
