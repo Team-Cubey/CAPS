@@ -213,7 +213,7 @@ public class HttpServer : IHttpServer
                 {
                     if (queryString.TryGetValue("map", out string map))
                     {
-                        if (map.StartsWith("https://cubey.hubza.co.uk/"))
+                        if (map.StartsWith("https://cubey.cc/")
                         {
                             result = goclfstat(map);
                             writestream(result, stream, incomingMessage, "application/json");
